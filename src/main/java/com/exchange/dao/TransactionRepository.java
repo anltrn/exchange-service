@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Repository
-public interface TransactionRepository extends JpaRepository<Transaction,Long> {
-    Page<Transaction> findByTransactionDate(LocalDate transactionDate, Pageable pageable);
+public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+    Page<Transaction> findByIdOrTransactionDate(UUID transactionId, LocalDate transactionDate, Pageable pageable);
 }
 
