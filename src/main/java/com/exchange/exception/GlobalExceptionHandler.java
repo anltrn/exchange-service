@@ -37,6 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ MethodArgumentTypeMismatchException.class })
     public ResponseEntity<Object> handleMethodArgumentTypeMismatch( MethodArgumentTypeMismatchException ex) {
+        log.info("Type Mismatch exception: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("Type Mismatch")
@@ -46,6 +47,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ DateTimeParseException.class })
     public ResponseEntity<Object> handleDateTimeParseException(DateTimeParseException ex) {
+        log.info("DateTimeParse Exception: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("DateTimeParse Exception")
@@ -55,6 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ NoSuchElementException.class })
     public ResponseEntity<Object> noSuchElementException(NoSuchElementException ex){
+        log.info("NoSuchElementException: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("NoSuchElementException")
@@ -64,15 +67,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ Exception.class })
     public ResponseEntity<Object> handleAll(Exception ex) {
+        log.info("Exception: {}", ex.getStackTrace());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("Error occurred")
-                .details(List.of(ex.getLocalizedMessage()))
+                .details(List.of(ex.getMessage()))
                 .build(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler({MissingServletRequestParameterException.class})
     public ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex) {
+        log.info("Parameter Missing: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("Missing Parameters")
@@ -82,6 +87,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({HttpMediaTypeNotSupportedException.class})
     public ResponseEntity<Object> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        log.info("Unsupported Media Type: {}", ex.getMessage());
         List<String> details = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
         builder.append(ex.getContentType());
@@ -97,6 +103,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({HttpMessageNotReadableException.class})
     public ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        log.info("Malformed JSON request: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("Malformed JSON request")
@@ -106,6 +113,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ HttpRequestMethodNotSupportedException.class })
     public ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        log.info("Method Not Supported: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("Method Not Supported")
@@ -115,6 +123,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ NoHandlerFoundException.class })
     public ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex) {
+        log.info("Method Not Found: {}", ex.getMessage());
         List<String> details = new ArrayList<>();
         details.add(String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
         return new ResponseEntity<>(ErrorResponse.builder()
@@ -126,6 +135,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException ex) {
+        log.info("Constraint Violations: {}", ex.getMessage());
         return new ResponseEntity<>(ErrorResponse.builder()
                 .date(LocalDateTime.now())
                 .message("Constraint Violations")
@@ -135,6 +145,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ MethodArgumentNotValidException.class })
     public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        log.info("Error on validation: {}", ex.getMessage());
         List<String> details = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()

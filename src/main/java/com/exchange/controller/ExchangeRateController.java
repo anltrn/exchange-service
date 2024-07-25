@@ -1,7 +1,7 @@
 package com.exchange.controller;
 
 
-import com.exchange.model.ExchangeRateRequest;
+import com.exchange.factory.RequestFactory;
 import com.exchange.model.ExchangeRateResponse;
 import com.exchange.service.ExchangeRateService;
 import jakarta.validation.constraints.Size;
@@ -23,6 +23,6 @@ public class ExchangeRateController {
     @GetMapping
     public ResponseEntity<ExchangeRateResponse> getExchangeRate(@Size(min=3, max=3, message = "baseCurrency should be 3 characters length") @RequestParam String baseCurrency,
                                                                 @Size(min=3, max=3, message = "targetCurrency should be 3 characters length") @RequestParam String targetCurrency) {
-        return ResponseEntity.ok(exchangeRateService.getExchangeRate(new ExchangeRateRequest(baseCurrency, targetCurrency)));
+        return ResponseEntity.ok(exchangeRateService.getExchangeRate(RequestFactory.exchangeRateRequest(baseCurrency, targetCurrency)));
     }
 }

@@ -3,9 +3,10 @@ package com.exchange;
 import com.exchange.dao.TransactionRepository;
 import com.exchange.entity.Transaction;
 import com.exchange.exception.ApiRequestException;
-import com.exchange.external.ExchangeRateClient;
+import com.exchange.factory.RequestFactory;
 import com.exchange.mapper.Mapper;
 import com.exchange.model.*;
+import com.exchange.service.ExchangeRateService;
 import com.exchange.service.impl.ConversionServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,7 +40,7 @@ public class ConversionServiceImplTests {
     @Spy
     private Mapper mapper = Mappers.getMapper(Mapper.class);;
     @Mock
-    private ExchangeRateClient exchangeRateClient;
+    private ExchangeRateService exchangeRateService;
     @InjectMocks
     private ConversionServiceImpl conversionService;
 
@@ -53,24 +53,19 @@ public class ConversionServiceImplTests {
         transaction.setSourceCurrency("USD");
         transaction.setAmount(BigDecimal.valueOf(5));
         transaction.setConvertedAmount(BigDecimal.valueOf(80));
-        ExternalExchangeRateResponse clientResp = new ExternalExchangeRateResponse();
-        clientResp.setRates(Map.of("TRY", Double.valueOf("18")));
-        clientResp.setSuccess(true);
-        when(exchangeRateClient.getExchangeRate(Mockito.any())).thenReturn(clientResp);
-        CreateConversionTransactionRequest input = new CreateConversionTransactionRequest();
-        input.setSourceCurrency("USD");
-        input.setTargetCurrency("TRY");
-        input.setSourceAmount(BigDecimal.valueOf(5));
-        ConversionTransaction response = conversionService.createConversionTransaction(input);
+        ExchangeRateResponse clientResp = new ExchangeRateResponse(Double.valueOf("18"));
+        when(exchangeRateService.getExchangeRate(Mockito.any())).thenReturn(clientResp);
+        CreateConversionTransactionRequest createConversionTransactionRequest = RequestFactory.createConversionTransactionRequest("USD","TRY",BigDecimal.valueOf(5) );
+        ConversionTransaction response = conversionService.createConversionTransaction(createConversionTransactionRequest);
         assertThat(response.getConvertedAmount()).isEqualTo(BigDecimal.valueOf(90.0));
         Mockito.verify(transactionRepository).save(Mockito.any());
-        Mockito.verify(exchangeRateClient).getExchangeRate(Mockito.any());
+        Mockito.verify(exchangeRateService).getExchangeRate(Mockito.any());
     }
 
     @Test
     @DisplayName("listConversions should return success response when valid input provided")
     void listConversionsShouldReturnSuccessResponseWhenValidInputProvided() {
-        ListConversionTransactionsRequest listInput = new ListConversionTransactionsRequest();
+        ListConversionTransactionsRequest listConversionTransactionsRequest = RequestFactory.listConversionTransactionsRequest(null, LocalDate.now(), PageRequest.of(0, 10));
         List<Transaction> entityList = new ArrayList<>();
         Transaction entity = new Transaction();
         entity.setId(TRANSACTION_ID);
@@ -84,8 +79,7 @@ public class ConversionServiceImplTests {
         long totalElements = 1;
         Page<Transaction> pageTransaction = new PageImpl<>(entityList, pageable, totalElements);
         when(transactionRepository.findByIdOrTransactionDate(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(pageTransaction);
-        listInput.setConversionDate(LocalDate.now());
-        ListConversionTransactionResponse response = conversionService.listConversionTransactions(listInput);
+        ListConversionTransactionResponse response = conversionService.listConversionTransactions(listConversionTransactionsRequest);
         assertThat(response.getConversionTransactionList().get(0).getConvertedAmount()).isEqualTo(BigDecimal.valueOf(400));
         Mockito.verify(transactionRepository).findByIdOrTransactionDate(Mockito.any(),Mockito.any(),Mockito.any());
     }
@@ -93,14 +87,9 @@ public class ConversionServiceImplTests {
     @Test
     @DisplayName("createConversion should return error response when source amount negative")
     void createConversionShouldReturnErrorResponseWhenSourceAmountNegative() {
-        ExternalExchangeRateResponse clientResp = new ExternalExchangeRateResponse();
-        clientResp.setRates(Map.of("TRY", Double.valueOf("18")));
-        clientResp.setSuccess(true);
-        when(exchangeRateClient.getExchangeRate(Mockito.any())).thenReturn(clientResp);
-        CreateConversionTransactionRequest createInput = new CreateConversionTransactionRequest();
-        createInput.setSourceAmount(BigDecimal.TEN.negate());
-        createInput.setSourceCurrency("USD");
-        createInput.setTargetCurrency("TRY");
+        ExchangeRateResponse exchangeRateResponse = new ExchangeRateResponse(Double.valueOf("18"));
+        when(exchangeRateService.getExchangeRate(Mockito.any())).thenReturn(exchangeRateResponse);
+        CreateConversionTransactionRequest createInput = RequestFactory.createConversionTransactionRequest("USD","TRY",BigDecimal.valueOf(10));
         when(conversionService.createConversionTransaction(createInput)).
                 thenThrow(new ApiRequestException("SourceAmount should be greater than 0", HttpStatus.BAD_REQUEST));
 
@@ -115,11 +104,9 @@ public class ConversionServiceImplTests {
     @Test
     @DisplayName("listConversions should return error response when valid input not provided")
     void listConversionsShouldReturnErrorResponseWhenValidInputNotProvided() {
-        ListConversionTransactionsRequest listInput = new ListConversionTransactionsRequest();
-        listInput.setConversionDate(LocalDate.now());
-        listInput.setTransactionId(TRANSACTION_ID);
+        ListConversionTransactionsRequest listConversionTransactionsRequest = RequestFactory.listConversionTransactionsRequest(TRANSACTION_ID, LocalDate.now(), PageRequest.of(0, 10));
         Throwable thrown = catchThrowable(() -> {
-            conversionService.listConversionTransactions(listInput);
+            conversionService.listConversionTransactions(listConversionTransactionsRequest);
         });
         assertThat(thrown)
                 .isInstanceOf(ApiRequestException.class)

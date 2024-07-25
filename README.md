@@ -135,6 +135,13 @@ GET /api/exchange-rate?baseCurrency=GBP&targetCurrency=TRY
   "rate": 42.512532
 }
 ```
+
+## Used Patterns
+
+Strategy Pattern for service provider.<br>
+Factory Pattern for request objects.<br>
+MVC pattern for controller, service and repository layers.<br>
+
 ## Installation
 
 To build and run the service, use the following command:

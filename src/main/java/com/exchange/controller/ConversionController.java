@@ -1,5 +1,6 @@
 package com.exchange.controller;
 
+import com.exchange.factory.RequestFactory;
 import com.exchange.model.*;
 import com.exchange.service.ConversionService;
 import jakarta.validation.Valid;
@@ -33,7 +34,7 @@ public class ConversionController {
                                                                                  UUID transactionId,
                                                                                  @RequestParam(defaultValue = "0") Integer pageNo,
                                                                                  @RequestParam(defaultValue = "20") Integer pageSize) {
-        ListConversionTransactionResponse transactionList = conversionService.listConversionTransactions(new ListConversionTransactionsRequest(transactionId, conversionDate, PageRequest.of(pageNo, pageSize)));
+        ListConversionTransactionResponse transactionList = conversionService.listConversionTransactions(RequestFactory.listConversionTransactionsRequest(transactionId, conversionDate, PageRequest.of(pageNo, pageSize)));
         return ResponseEntity.ok(transactionList);
     }
 }

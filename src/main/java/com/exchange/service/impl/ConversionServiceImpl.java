@@ -3,10 +3,11 @@ package com.exchange.service.impl;
 import com.exchange.dao.TransactionRepository;
 import com.exchange.entity.Transaction;
 import com.exchange.exception.ApiRequestException;
-import com.exchange.external.ExchangeRateClient;
+import com.exchange.factory.RequestFactory;
 import com.exchange.mapper.Mapper;
 import com.exchange.model.*;
 import com.exchange.service.ConversionService;
+import com.exchange.service.ExchangeRateService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,15 +17,13 @@ import org.springframework.stereotype.Service;
 public class ConversionServiceImpl implements ConversionService {
     private final TransactionRepository transactionRepository;
     private final Mapper mapper;
-    private final ExchangeRateClient exchangeRateClient;
+    private final ExchangeRateService exchangeRateService;
 
     @Override
     public ConversionTransaction createConversionTransaction(CreateConversionTransactionRequest createExchangeTransactionRequest) {
-        ExchangeRateRequest exchangeRateInput = new ExchangeRateRequest();
-        exchangeRateInput.setTargetCurrency(createExchangeTransactionRequest.getTargetCurrency());
-        exchangeRateInput.setBaseCurrency(createExchangeTransactionRequest.getSourceCurrency());
-        ExternalExchangeRateResponse rateResponse = exchangeRateClient.getExchangeRate(exchangeRateInput);
-        Transaction transaction = mapper.mapToTransaction(createExchangeTransactionRequest, rateResponse.getRates().get(exchangeRateInput.getTargetCurrency()));
+        ExchangeRateRequest exchangeRateRequest = RequestFactory.exchangeRateRequest(createExchangeTransactionRequest.getTargetCurrency(),createExchangeTransactionRequest.getSourceCurrency());
+        ExchangeRateResponse rateResponse = exchangeRateService.getExchangeRate(exchangeRateRequest);
+        Transaction transaction = mapper.mapToTransaction(createExchangeTransactionRequest, rateResponse.getRate());
         transactionRepository.save(transaction);
         ConversionTransaction conversionTransaction = mapper.mapToConversionTransaction(transaction);
         return conversionTransaction;
